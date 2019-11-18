@@ -1,20 +1,10 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-
-void sortProcess(int pcchild1[2], int pcchild2[2]){
-
-    int fd = fdopen(pcchild1[1],"w");
-
-    dup2(pcchild1[0],STDIN_FILENO);
-    dup2(pcchild2[1],STDOUT_FILENO);
-
-    
-
-
-
-}
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <string.h>
+#include <ctype.h>
 
 void createProcesses(){
 
@@ -32,26 +22,24 @@ void createProcesses(){
     int c;
 
     FILE * fd;
+    FILE * fd1;
     int count = 0;
-
+    char word[34];
+    
 
     switch (pidCh1 = fork()){
         case -1:
             printf("Error");
         case 0:
-            //sortProcess( pchild1,pchild2);
             dup2(pchild1[0],STDIN_FILENO);
-            c = fgetc(pchild1[0]);
-            close(pchild1[0]);
+            dup2(pchild2[1],STDOUT_FILENO);
             close(pchild1[1]);
-        ;
-
-
-            // dup2(pchild2[1],STDOUT_FILENO);
+            close(pchild2[0]);
+                 
+            execl("/usr/bin/sort","sort",(char*) NULL);
+            
 
         default:
-            // c = fgetc(stdin);
-            // printf("%c",c);
             
             fd = fdopen(pchild1[1],"w");
             do{
@@ -59,25 +47,84 @@ void createProcesses(){
 
 
                 if(isalpha(c) == 0){
-                    fputc('\n',fd);
+                    word[count] = '\n';
+                    word[count+1] = '\0';
+                    if(count >= 5){ 
+                        fputs(word,fd);
+                    }
+
                     count = 0;
+                    //printf("\n");
                 }
-                else if (isalpha(c) != 0 && count <= 32){
-                    fputc(c,fd);
+                else if (isalpha(c) != 0 && count < 32){
+                    word[count] = tolower(c);
                     count ++;
+                    //printf("%c",c);
                 }
 
 
-                if(feof(stdin)) break;
+                if(feof(stdin)){
+                    // if(count > 0){
+                    // }
+                    break;
+
+                }
                  // printf("%c",c);
 
             }while(1);
-            
-            waitpid(pidCh1,NULL,0);
+
             close(pchild1[0]);
-            close(pchild1[1]);
-            //execl bin/sort
+            fclose(fd);
+            switch (pidCh2 = fork()){
+                case -1:
+                    printf("error");
+                case 0:
+                    dup2(pchild2[0],STDIN_FILENO);
+                    close(pchild2[1]);
+
+
+                        // read(pchild2[0],stuff,4
+                    fd1 = fdopen(pchild2[0],"r");
+                    char buf[34];
+
+                    char previous[34];
+                    int wordCount = 1;
+                    int didPrint = 0;
+                        
+                    if(fgets(buf,34,fd1) != (char *) NULL){
+                        strcpy(previous,buf);
+                    }
+
+                    while (fgets(buf,34,fd1) != (char *) NULL){
+                        if(strcmp(previous,buf) == 0){
+                            wordCount ++;
+                            didPrint = 1;
+                        }
+                        else{
+                            printf("%5d %s",wordCount,previous);
+                            strcpy(previous,buf);
+                            wordCount = 1;
+                            didPrint = 0;
+                        }
+                    }
+                    if(didPrint == 1){
+                        printf("%5d %s",wordCount,buf);
+                    }
+                    fflush(stdout);
+                    fclose(fd1);
+
+                default:
+                    close(pchild2[1]);
+                    close(pchild2[0]);
+                    waitpid(pidCh1,NULL,0); 
+                    waitpid(pidCh2,NULL,0); 
+            }
+                      
+
     }
+
+
+
 }
 
 int main(int argc, char* argv[]){

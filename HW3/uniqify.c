@@ -6,6 +6,10 @@
 #include <string.h>
 #include <ctype.h>
 
+// THIS CODE IS MY OWN WORK, IT WAS WRITTEN WITHOUT CONSULTING
+
+// A TUTOR OR CODE WRITTEN BY OTHER STUDENTS - Ancelmo Polanco
+
 void createProcesses(){
 
     int pchild1[2];
@@ -54,22 +58,14 @@ void createProcesses(){
                     }
 
                     count = 0;
-                    //printf("\n");
                 }
                 else if (isalpha(c) != 0 && count < 32){
                     word[count] = tolower(c);
                     count ++;
-                    //printf("%c",c);
                 }
 
 
-                if(feof(stdin)){
-                    // if(count > 0){
-                    // }
-                    break;
-
-                }
-                 // printf("%c",c);
+                if(feof(stdin)) break;
 
             }while(1);
 
@@ -83,7 +79,6 @@ void createProcesses(){
                     close(pchild2[1]);
 
 
-                        // read(pchild2[0],stuff,4
                     fd1 = fdopen(pchild2[0],"r");
                     char buf[34];
 
